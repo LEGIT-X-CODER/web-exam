@@ -34,6 +34,19 @@
         <artifactId>maven-war-plugin</artifactId>
         <version>3.3.2</version>
       </plugin>
+      <plugin>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>11.0.15</version>
+        <configuration>
+          <webApp>
+            <contextPath>/executioner</contextPath>
+          </webApp>
+          <httpConnector>
+            <port>8083</port>
+          </httpConnector>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
