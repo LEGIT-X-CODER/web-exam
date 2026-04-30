@@ -11,14 +11,17 @@
    CONFIGURATION — change BACKEND_IP here OR via the
    ⚙️ settings button in the UI.
    ===================================================== */
-const DEFAULT_BACKEND_IP = "localhost"; // ← change this to your Laptop B's IP
-const BACKEND_PORT        = "8080";
-const BACKEND_PATH        = "/PythonRunner/run";
+/* =====================================================
+   CONFIGURATION — track three specialized node IPs
+   ===================================================== */
+const DEFAULT_IP = "localhost";
+const BACKEND_PORT = "8083";
 
 /* =====================================================
    DOM REFERENCES
    ===================================================== */
 const codeEditor     = document.getElementById("codeEditor");
+const dataEditor     = document.getElementById("dataEditor"); // NEW
 const runBtn         = document.getElementById("runBtn");
 const clearBtn       = document.getElementById("clearBtn");
 const loadSampleBtn  = document.getElementById("loadSampleBtn");
@@ -27,16 +30,21 @@ const consoleStats   = document.getElementById("consoleStats");
 const execTime       = document.getElementById("execTime");
 const execStatus     = document.getElementById("execStatus");
 const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingText    = document.getElementById("loadingText"); // NEW
 const lineNumbers    = document.getElementById("lineNumbers");
 const lineCount      = document.getElementById("lineCount");
 const charCount      = document.getElementById("charCount");
 const statusPill     = document.getElementById("statusPill");
 const statusDot      = document.getElementById("statusDot");
 const statusLabel    = document.getElementById("statusLabel");
-const backendUrlEl   = document.getElementById("backendUrl");
 const consoleScroll  = document.getElementById("consoleScroll");
 const copyOutputBtn  = document.getElementById("copyOutputBtn");
 const clearOutputBtn = document.getElementById("clearOutputBtn");
+
+/* Node Labels in footer */
+const codeNodeUrlEl  = document.getElementById("codeNodeUrl");
+const dataNodeUrlEl  = document.getElementById("dataNodeUrl");
+const execNodeUrlEl  = document.getElementById("execNodeUrl");
 
 /* Modal */
 const configBtn      = document.getElementById("configBtn");
@@ -44,23 +52,28 @@ const modalBackdrop  = document.getElementById("modalBackdrop");
 const modalClose     = document.getElementById("modalClose");
 const modalCancel    = document.getElementById("modalCancel");
 const modalSave      = document.getElementById("modalSave");
-const backendIpInput = document.getElementById("backendIpInput");
+
+/* Modal Inputs */
+const codeIpInput    = document.getElementById("codeIpInput");
+const dataIpInput    = document.getElementById("dataIpInput");
+const execIpInput    = document.getElementById("execIpInput");
 
 /* =====================================================
    STATE
    ===================================================== */
-let backendIp  = localStorage.getItem("pyrunner_ip") || DEFAULT_BACKEND_IP;
-let isRunning  = false;
+let codeIp = localStorage.getItem("pyrunner_code_ip") || DEFAULT_IP;
+let dataIp = localStorage.getItem("pyrunner_data_ip") || DEFAULT_IP;
+let execIp = localStorage.getItem("pyrunner_exec_ip") || DEFAULT_IP;
+
+let isRunning = false;
 
 /* =====================================================
    UTILITIES
    ===================================================== */
-function getEndpoint() {
-  return `http://${backendIp}:${BACKEND_PORT}${BACKEND_PATH}`;
-}
-
-function updateBackendLabel() {
-  backendUrlEl.textContent = `http://${backendIp}:${BACKEND_PORT}`;
+function updateNodeLabels() {
+  codeNodeUrlEl.textContent = `Code: ${codeIp}`;
+  dataNodeUrlEl.textContent = `Data: ${dataIp}`;
+  execNodeUrlEl.textContent = `Exec: ${execIp}`;
 }
 
 function setStatus(state, label) {
@@ -73,8 +86,9 @@ function setOutput(text, type = "active") {
   output.className   = "console-output " + type;
 }
 
-function showLoading(visible) {
+function showLoading(visible, text = "Executing...") {
   loadingOverlay.style.display = visible ? "flex" : "none";
+  loadingText.textContent = text;
 }
 
 function showStats(time, ok) {
@@ -88,33 +102,12 @@ function showStats(time, ok) {
 function updateLineNumbers() {
   const lines = codeEditor.value.split("\n");
   lineNumbers.textContent = lines.map((_, i) => i + 1).join("\n");
-
   lineCount.textContent = `Lines: ${lines.length}`;
   charCount.textContent = `Chars: ${codeEditor.value.length}`;
 }
 
-/* ── Sync scroll between textarea and line numbers ── */
 codeEditor.addEventListener("scroll", () => {
   lineNumbers.scrollTop = codeEditor.scrollTop;
-});
-
-/* ── Tab key support ── */
-codeEditor.addEventListener("keydown", (e) => {
-  if (e.key === "Tab") {
-    e.preventDefault();
-    const start = codeEditor.selectionStart;
-    const end   = codeEditor.selectionEnd;
-    codeEditor.value =
-      codeEditor.value.substring(0, start) + "    " + codeEditor.value.substring(end);
-    codeEditor.selectionStart = codeEditor.selectionEnd = start + 4;
-    updateLineNumbers();
-  }
-
-  /* Ctrl + Enter → Run */
-  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-    e.preventDefault();
-    runCode();
-  }
 });
 
 codeEditor.addEventListener("input", updateLineNumbers);
@@ -122,38 +115,33 @@ codeEditor.addEventListener("input", updateLineNumbers);
 /* =====================================================
    SAMPLE CODE
    ===================================================== */
-const SAMPLE_CODE = `# Sample: Fibonacci sequence + statistics
-import math
+const SAMPLE_CODE = `import math
 
-def fibonacci(n):
-    a, b = 0, 1
-    seq = []
-    for _ in range(n):
-        seq.append(a)
-        a, b = b, a + b
-    return seq
+def calculate_circle_area(radius):
+    return math.pi * radius**2
 
-n = 12
-fib = fibonacci(n)
-print(f"First {n} Fibonacci numbers:")
-print(fib)
+# We will read 'r' from the Data Machine's data.txt if needed
+# For now, let's just print something
+print("Executing code from Code Machine...")
+print(f"Area of circle with radius 5: {calculate_circle_area(5):.2f}")
+`;
 
-total = sum(fib)
-avg   = total / len(fib)
-print(f"\\nSum  : {total}")
-print(f"Mean : {avg:.2f}")
-print(f"Max  : {max(fib)}")
-print(f"sqrt(Max): {math.sqrt(max(fib)):.4f}")
+const SAMPLE_DATA = `# State variables for Data Machine
+radius = 10
+user_id = "admin_77"
+execution_mode = "distributed"
 `;
 
 loadSampleBtn.addEventListener("click", () => {
   codeEditor.value = SAMPLE_CODE;
+  dataEditor.value = SAMPLE_DATA;
   updateLineNumbers();
   codeEditor.focus();
 });
 
 clearBtn.addEventListener("click", () => {
   codeEditor.value = "";
+  dataEditor.value = "";
   updateLineNumbers();
   codeEditor.focus();
 });
@@ -162,7 +150,7 @@ clearBtn.addEventListener("click", () => {
    OUTPUT CONTROLS
    ===================================================== */
 clearOutputBtn.addEventListener("click", () => {
-  setOutput("$ Console cleared. Write some code and click Run.", "");
+  setOutput("$ Console cleared. Ready.", "");
   consoleStats.style.display = "none";
   setStatus("", "Ready");
 });
@@ -176,7 +164,6 @@ copyOutputBtn.addEventListener("click", async () => {
     setTimeout(() => (copyOutputBtn.textContent = "Copy"), 1800);
   } catch {
     copyOutputBtn.textContent = "Failed";
-    setTimeout(() => (copyOutputBtn.textContent = "Copy"), 1800);
   }
 });
 
@@ -184,9 +171,10 @@ copyOutputBtn.addEventListener("click", async () => {
    BACKEND CONFIG MODAL
    ===================================================== */
 function openModal() {
-  backendIpInput.value    = backendIp;
+  codeIpInput.value = codeIp;
+  dataIpInput.value = dataIp;
+  execIpInput.value = execIp;
   modalBackdrop.style.display = "flex";
-  setTimeout(() => backendIpInput.focus(), 80);
 }
 
 function closeModal() {
@@ -197,34 +185,32 @@ configBtn.addEventListener("click",  openModal);
 modalClose.addEventListener("click", closeModal);
 modalCancel.addEventListener("click", closeModal);
 
-modalBackdrop.addEventListener("click", (e) => {
-  if (e.target === modalBackdrop) closeModal();
-});
-
 modalSave.addEventListener("click", () => {
-  const ip = backendIpInput.value.trim();
-  if (!ip) { backendIpInput.focus(); return; }
-  backendIp = ip;
-  localStorage.setItem("pyrunner_ip", ip);
-  updateBackendLabel();
+  codeIp = codeIpInput.value.trim() || DEFAULT_IP;
+  dataIp = dataIpInput.value.trim() || DEFAULT_IP;
+  execIp = execIpInput.value.trim() || DEFAULT_IP;
+
+  localStorage.setItem("pyrunner_code_ip", codeIp);
+  localStorage.setItem("pyrunner_data_ip", dataIp);
+  localStorage.setItem("pyrunner_exec_ip", execIp);
+
+  updateNodeLabels();
   closeModal();
-  setOutput(`$ Backend configured → http://${ip}:${BACKEND_PORT}\n$ Ready to execute Python code.`, "");
+  setOutput(`$ Distributed Nodes Configured.\n$ Ready.`, "");
   setStatus("", "Ready");
 });
 
-backendIpInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") modalSave.click();
-});
-
 /* =====================================================
-   MAIN: RUN CODE
+   MAIN: DISTRIBUTED RUN
    ===================================================== */
 async function runCode() {
   if (isRunning) return;
 
   const code = codeEditor.value.trim();
+  const data = dataEditor.value.trim();
+
   if (!code) {
-    setOutput("⚠ No code to execute. Write some Python first.", "error");
+    setOutput("⚠ No code to execute.", "error");
     return;
   }
 
@@ -233,57 +219,55 @@ async function runCode() {
   runBtn.classList.add("running");
   runBtn.querySelector(".btn-label").textContent = "Running…";
 
-  showLoading(true);
-  setStatus("running", "Executing…");
-  setOutput("$ Sending code to remote server…\n$ Please wait…", "");
+  setOutput("$ Initiating distributed execution...\n", "");
   consoleStats.style.display = "none";
 
   const startTime = performance.now();
 
   try {
-    const response = await fetch(getEndpoint(), {
-      method:  "POST",
+    // 1. Save Code to Code Machine
+    showLoading(true, "Saving code to Code Machine...");
+    const codeRes = await fetch(`http://${codeIp}:${BACKEND_PORT}/code-receiver/save`, {
+      method: "POST",
       headers: { "Content-Type": "text/plain" },
-      body:    code,
+      body: code,
+    });
+    if (!codeRes.ok) throw new Error(`Code Machine Error: ${codeRes.status}`);
+    setOutput(output.textContent + "> Code Machine: Saved successfully.\n");
+
+    // 2. Save Data to Data Machine
+    showLoading(true, "Saving data to Data Machine...");
+    const dataRes = await fetch(`http://${dataIp}:${BACKEND_PORT}/data-receiver/save`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: data || "# No data provided",
+    });
+    if (!dataRes.ok) throw new Error(`Data Machine Error: ${dataRes.status}`);
+    setOutput(output.textContent + "> Data Machine: Saved successfully.\n");
+
+    // 3. Execute on Executioner Machine
+    showLoading(true, "Triggering execution on Executioner Machine...");
+    const execRes = await fetch(`http://${execIp}:${BACKEND_PORT}/executioner/run`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: code, // Still sending code for execution convenience
     });
 
     const elapsed = Math.round(performance.now() - startTime);
-    const text    = await response.text();
+    const resultText = await execRes.text();
 
-    if (response.ok) {
-      setOutput(text || "(no output)", "active");
+    if (execRes.ok) {
+      setOutput(output.textContent + "\n" + (resultText || "(no output)"), "active");
       setStatus("success", "Success");
       showStats(elapsed, true);
     } else {
-      const msg = `Server returned HTTP ${response.status} ${response.statusText}\n\n${text}`;
-      setOutput(msg, "error");
-      setStatus("error", `HTTP ${response.status}`);
-      showStats(elapsed, false);
+      throw new Error(`Executioner Error: ${execRes.status}\n${resultText}`);
     }
-
-    /* Auto-scroll console to bottom */
-    consoleScroll.scrollTop = consoleScroll.scrollHeight;
 
   } catch (err) {
     const elapsed = Math.round(performance.now() - startTime);
-
-    let friendlyMsg;
-    if (err instanceof TypeError && err.message.toLowerCase().includes("fetch")) {
-      friendlyMsg =
-        `⚡ Network Error — Cannot reach the backend server.\n\n` +
-        `  Endpoint tried: ${getEndpoint()}\n\n` +
-        `  Possible causes:\n` +
-        `  • Tomcat is not running on Laptop B\n` +
-        `  • Wrong IP address (click ⚙️ to change)\n` +
-        `  • Both laptops must be on the same Wi-Fi\n` +
-        `  • Firewall is blocking port ${BACKEND_PORT}\n\n` +
-        `  Quick check: open http://${backendIp}:${BACKEND_PORT} in a browser.`;
-    } else {
-      friendlyMsg = `Unexpected error:\n${err.message}`;
-    }
-
-    setOutput(friendlyMsg, "error");
-    setStatus("error", "Network Error");
+    setOutput(output.textContent + "\n❌ FAILED\n" + err.message, "error");
+    setStatus("error", "Error");
     showStats(elapsed, false);
   } finally {
     isRunning = false;
@@ -291,6 +275,7 @@ async function runCode() {
     runBtn.classList.remove("running");
     runBtn.querySelector(".btn-label").textContent = "Run Code";
     showLoading(false);
+    consoleScroll.scrollTop = consoleScroll.scrollHeight;
   }
 }
 
@@ -300,21 +285,21 @@ runBtn.addEventListener("click", runCode);
 /* =====================================================
    INIT
    ===================================================== */
-updateBackendLabel();
+updateNodeLabels();
 updateLineNumbers();
 
 /* Pre-load a small welcome message */
-codeEditor.value = `# Welcome to PyRunner Remote 🚀
-# Your Python code runs on a remote server via HTTP.
-#
-# Tip: Press Ctrl+Enter to run, or click "Sample" for a demo.
+codeEditor.value = `# Welcome to PyRunner Distributed 🚀
+# Code Machine: Saves your scripts.
+# Data Machine: Saves your variables.
+# Executioner: Runs the code.
 
-print("Hello from the remote machine!")
+print("Hello from the distributed system!")
 `;
 updateLineNumbers();
 
 /* If no custom IP set, prompt user on first load */
-if (!localStorage.getItem("pyrunner_ip")) {
+if (!localStorage.getItem("pyrunner_code_ip")) {
   setTimeout(() => {
     openModal();
   }, 800);

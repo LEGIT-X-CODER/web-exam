@@ -34,7 +34,7 @@
       <div class="panel-header">
         <div class="panel-title">
           <span class="panel-icon">🐍</span>
-          Python Editor
+          Python Code
         </div>
         <div class="editor-actions">
           <button class="btn btn-ghost" id="clearBtn" title="Clear editor">Clear</button>
@@ -52,8 +52,25 @@
           autocomplete="off"
           autocorrect="off"
           autocapitalize="off"
-          placeholder="# Write your Python code here...&#10;print('Hello, World!')"
+          placeholder="# Write your Python code here..."
           aria-label="Python code editor"
+        ></textarea>
+      </div>
+
+      <!-- NEW: Data variables panel -->
+      <div class="panel-header" style="border-top: 1px solid var(--border-color); margin-top: 0;">
+        <div class="panel-title">
+          <span class="panel-icon">📊</span>
+          Data Variables
+        </div>
+      </div>
+      <div class="data-wrapper">
+        <textarea
+          id="dataEditor"
+          class="data-editor"
+          spellcheck="false"
+          placeholder="Enter state variables here... (e.g. x=10, y=20)"
+          aria-label="Data variables editor"
         ></textarea>
       </div>
 
@@ -97,12 +114,12 @@
         <!-- Loading overlay -->
         <div class="loading-overlay" id="loadingOverlay" style="display:none;">
           <div class="spinner"></div>
-          <p class="loading-text">Executing on remote server...</p>
+          <p class="loading-text" id="loadingText">Executing on remote server...</p>
         </div>
       </div>
 
       <div class="panel-footer output-footer">
-        <span class="footer-hint">💡 Output from backend server at <code id="backendUrl">http://&lt;BACKEND_IP&gt;:8080</code></span>
+        <span class="footer-hint">💡 Nodes: <code id="codeNodeUrl">...</code> | <code id="dataNodeUrl">...</code> | <code id="execNodeUrl">...</code></span>
       </div>
     </section>
 
@@ -112,17 +129,27 @@
   <div class="modal-backdrop" id="modalBackdrop" style="display:none;">
     <div class="modal" id="configModal">
       <div class="modal-header">
-        <h2>⚙️ Backend Configuration</h2>
+        <h2>⚙️ Distributed Configuration</h2>
         <button class="modal-close" id="modalClose">✕</button>
       </div>
       <div class="modal-body">
-        <label class="form-label" for="backendIpInput">Backend Server IP Address</label>
-        <input type="text" id="backendIpInput" class="form-input" placeholder="e.g. 192.168.1.100" />
-        <p class="form-hint">Find the IP on Laptop B by running <code>ipconfig</code> in Command Prompt.<br/>Look for <strong>IPv4 Address</strong> under your Wi-Fi adapter.</p>
+        <div class="form-group">
+          <label class="form-label" for="codeIpInput">Code Machine IP</label>
+          <input type="text" id="codeIpInput" class="form-input" placeholder="e.g. 192.168.1.101" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="dataIpInput">Data Machine IP</label>
+          <input type="text" id="dataIpInput" class="form-input" placeholder="e.g. 192.168.1.102" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="execIpInput">Executioner Machine IP</label>
+          <input type="text" id="execIpInput" class="form-input" placeholder="e.g. 192.168.1.103" />
+        </div>
+        <p class="form-hint">Ensure all machines are on the same network and Tomcat is running.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" id="modalCancel">Cancel</button>
-        <button class="btn btn-primary" id="modalSave">Save & Connect</button>
+        <button class="btn btn-primary" id="modalSave">Save & Apply</button>
       </div>
     </div>
   </div>
