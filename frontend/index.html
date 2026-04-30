@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Remote Python Runner</title>
+  <meta name="description" content="Write and execute Python code remotely on a distributed backend server." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">PyRunner<span class="logo-accent">Remote</span></span>
+      </div>
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusLabel">Ready</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MAIN LAYOUT ========== -->
+  <main class="main-container">
+
+    <!-- LEFT PANEL: Editor -->
+    <section class="panel editor-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon">🐍</span>
+          Python Editor
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-ghost" id="clearBtn" title="Clear editor">Clear</button>
+          <button class="btn btn-ghost" id="loadSampleBtn" title="Load sample code">Sample</button>
+        </div>
+      </div>
+
+      <!-- Line numbers + textarea -->
+      <div class="editor-wrapper">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea
+          id="codeEditor"
+          class="code-editor"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          placeholder="# Write your Python code here...&#10;print('Hello, World!')"
+          aria-label="Python code editor"
+        ></textarea>
+      </div>
+
+      <div class="panel-footer">
+        <div class="editor-info">
+          <span id="lineCount">Lines: 0</span>
+          <span id="charCount">Chars: 0</span>
+        </div>
+        <button class="btn btn-primary" id="runBtn">
+          <span class="btn-icon">▶</span>
+          <span class="btn-label">Run Code</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Output Console -->
+    <section class="panel output-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon">🖥️</span>
+          Output Console
+        </div>
+        <div class="console-actions">
+          <button class="btn btn-ghost btn-sm" id="copyOutputBtn" title="Copy output">Copy</button>
+          <button class="btn btn-ghost btn-sm" id="clearOutputBtn" title="Clear output">Clear</button>
+        </div>
+      </div>
+
+      <div class="console-wrapper">
+        <!-- Execution stats bar -->
+        <div class="console-stats" id="consoleStats" style="display:none;">
+          <span id="execTime"></span>
+          <span id="execStatus"></span>
+        </div>
+
+        <!-- Output area -->
+        <div class="console-scroll" id="consoleScroll">
+          <pre class="console-output" id="output">$ Waiting for code execution...</pre>
+        </div>
+
+        <!-- Loading overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+          <div class="spinner"></div>
+          <p class="loading-text">Executing on remote server...</p>
+        </div>
+      </div>
+
+      <div class="panel-footer output-footer">
+        <span class="footer-hint">💡 Output from backend server at <code id="backendUrl">http://&lt;BACKEND_IP&gt;:8080</code></span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== CONFIG MODAL ========== -->
+  <div class="modal-backdrop" id="modalBackdrop" style="display:none;">
+    <div class="modal" id="configModal">
+      <div class="modal-header">
+        <h2>⚙️ Backend Configuration</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label" for="backendIpInput">Backend Server IP Address</label>
+        <input type="text" id="backendIpInput" class="form-input" placeholder="e.g. 192.168.1.100" />
+        <p class="form-hint">Find the IP on Laptop B by running <code>ipconfig</code> in Command Prompt.<br/>Look for <strong>IPv4 Address</strong> under your Wi-Fi adapter.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config trigger (floating button) -->
+  <button class="config-btn" id="configBtn" title="Configure backend IP">⚙️</button>
+
+  <script src="script.js"></script>
+</body>
+</html>

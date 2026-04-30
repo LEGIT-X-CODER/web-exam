@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+             https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+  <display-name>PythonRunner</display-name>
+  <description>Remote Python execution servlet</description>
+
+  <!--
+    The @WebServlet annotation in PythonRunnerServlet.java already maps /run,
+    so you don't strictly need this block. It is included for clarity and
+    compatibility with older Tomcat versions that require explicit XML mapping.
+  -->
+  <servlet>
+    <servlet-name>PythonRunnerServlet</servlet-name>
+    <servlet-class>com.runner.PythonRunnerServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>PythonRunnerServlet</servlet-name>
+    <url-pattern>/run</url-pattern>
+  </servlet-mapping>
+
+  <!-- Default welcome file (optional, not used by the servlet itself) -->
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+</web-app>
